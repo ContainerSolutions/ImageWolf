@@ -1,0 +1,26 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  cache:
+    blobdescriptor: inmemory
+  filesystem:
+    rootdirectory: /var/lib/registry
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
+notifications:
+  endpoints:
+    - name: reggie
+      disabled: false
+      url: http://reggie:8000
+      timeout: 500
+      threshold: 5
+      backoff: 1000
