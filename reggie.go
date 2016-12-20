@@ -12,6 +12,11 @@ import (
 
 	"os/exec"
 
+	"os"
+
+	"github.com/anacrolix/torrent"
+	"github.com/anacrolix/torrent/bencode"
+	"github.com/anacrolix/torrent/metainfo"
 	"github.com/docker/distribution/notifications"
 )
 
@@ -101,6 +106,54 @@ func downloadAndSeedImage(repo string, tag string) {
 		return
 	}
 	log.Println("Saved")
+	mi := createTorrent(tmpfile)
+	seedTorrent(&mi)
+	//log.Printf("torrent: %v\n", mi)
+
+}
+
+func seedTorrent(mi *metainfo.MetaInfo) {
+
+	//Hmm, will need to do this separately and send torrents dynamically
+	//but for the moment...
+	var clientConfig torrent.Config
+	clientConfig.Seed = true
+	client, err := torrent.NewClient(&clientConfig)
+	if err != nil {
+		log.Printf("error creating client: %s", err)
+		return
+	}
+	t, err := client.AddTorrent(mi)
+	if err != nil {
+		log.Printf("error adding torrent: %s", err)
+		return
+	}
+	go func() {
+		<-t.GotInfo()
+		t.DownloadAll()
+	}()
+
+	log.Printf("Info: %v\n", t.Info())
+
+}
+
+func createTorrent(f *os.File) metainfo.MetaInfo {
+	mi := metainfo.MetaInfo{}
+
+	mi.SetDefaults()
+	info := metainfo.Info{
+		PieceLength: 256 * 1024,
+	}
+
+	err := info.BuildFromFilePath(f.Name())
+	if err != nil {
+		log.Fatal(err)
+	}
+	mi.InfoBytes, err = bencode.Marshal(info)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return mi
 
 }
 
