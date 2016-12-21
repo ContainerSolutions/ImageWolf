@@ -14,6 +14,8 @@ import (
 
 	"os"
 
+	"bytes"
+
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/bencode"
 	"github.com/anacrolix/torrent/metainfo"
@@ -23,12 +25,54 @@ import (
 var seen = make(map[string]bool)
 var mu sync.Mutex
 
+var peers []string
+
 func main() {
-	http.HandleFunc("/", handler)
+
+	//get peers from somewhere ideally
+	peers = append(peers, "testhost")
+	http.HandleFunc("/registryNotifications", regHandler)
+	http.HandleFunc("/torrent", torrentHandler)
 	log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func torrentHandler(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		log.Printf("unexpected request method: %v", r.Method)
+		return
+	}
+
+	// Extract the content type and make sure it matches
+	contentType := r.Header.Get("Content-Type")
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("error parsing media type: %v, contenttype=%q", err, contentType)
+		return
+	}
+
+	if mediaType != "application/json" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		log.Printf("incorrect media type: %q != %q", mediaType, "application/json")
+		return
+	}
+
+	var t torrent.Torrent
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&t); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("error decoding request body: %v", err)
+		return
+	}
+
+	log.Printf("got a beautiful torrent %v\n", &t)
+
+}
+
+func regHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 	if r.Method != "POST" {
@@ -61,15 +105,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	evs := envelope.Events
-	for i := range evs {
+	for _, e := range evs {
 
 		mu.Lock()
-		if !seen[evs[i].ID] &&
-			evs[i].Action == "push" &&
-			evs[i].Target.MediaType == "application/vnd.docker.distribution.manifest.v2+json" {
-			seen[evs[i].ID] = true
-			logEvent(evs[i])
-			downloadAndSeedImage(evs[i].Target.Repository, evs[i].Target.Tag)
+		if !seen[e.ID] && e.Action == "push" &&
+			e.Target.MediaType == "application/vnd.docker.distribution.manifest.v2+json" {
+			seen[e.ID] = true
+			logEvent(e)
+			downloadAndSeedImage(e.Target.Repository, e.Target.Tag)
 		}
 		mu.Unlock()
 	}
@@ -80,6 +123,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	//filter on action push and mediatype manifest?
 	//ignore layers for moment
 	//then pull given image
+	//call ronnie / wellbourne?
 
 }
 
@@ -108,6 +152,8 @@ func downloadAndSeedImage(repo string, tag string) {
 	log.Println("Saved")
 	mi := createTorrent(tmpfile)
 	seedTorrent(&mi)
+	log.Println("Seeded")
+
 	//log.Printf("torrent: %v\n", mi)
 
 }
@@ -118,6 +164,8 @@ func seedTorrent(mi *metainfo.MetaInfo) {
 	//but for the moment...
 	var clientConfig torrent.Config
 	clientConfig.Seed = true
+	clientConfig.DisableTrackers = true
+	clientConfig.NoDHT = true
 	client, err := torrent.NewClient(&clientConfig)
 	if err != nil {
 		log.Printf("error creating client: %s", err)
@@ -131,9 +179,33 @@ func seedTorrent(mi *metainfo.MetaInfo) {
 	go func() {
 		<-t.GotInfo()
 		t.DownloadAll()
+		notifyPeers(t)
 	}()
 
-	log.Printf("Info: %v\n", t.Info())
+	/*
+		Then need to think about how to ping others and d/load...
+		Come up with way to test this using containers on same host
+		may require multiple registry instances.
+		Put reggie and reg in same container?
+	*/
+
+}
+
+func notifyPeers(t *torrent.Torrent) {
+
+	for _, p := range peers {
+
+		url := fmt.Sprintf("http://%s/torrent", p)
+		data, err := json.Marshal(t)
+		if err != nil {
+			log.Printf("Failed to create JSON %v\n", err)
+		}
+
+		r := bytes.NewReader(data)
+
+		http.Post(url, "application/json", r)
+
+	}
 
 }
 
@@ -153,6 +225,7 @@ func createTorrent(f *os.File) metainfo.MetaInfo {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return mi
 
 }

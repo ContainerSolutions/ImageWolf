@@ -3,4 +3,6 @@ FROM debian
 RUN apt-get update && apt-get install -y curl
 RUN curl -sSL https://get.docker.com/ | sh
 COPY reggie /reggie
-CMD ["/reggie"]
+COPY registry /registry
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

@@ -20,7 +20,7 @@ notifications:
   endpoints:
     - name: reggie
       disabled: false
-      url: http://reggie:8000
+      url: http://reggie:8000/registryNotifications
       timeout: 500
       threshold: 5
       backoff: 1000
