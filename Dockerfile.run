@@ -2,7 +2,8 @@ FROM debian
 
 RUN apt-get update && apt-get install -y curl
 RUN curl -sSL https://get.docker.com/ | sh
+COPY config.yml /etc/docker/registry/config.yml 
 COPY reggie /reggie
-COPY registry /registry
+COPY registry-64 /registry
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
