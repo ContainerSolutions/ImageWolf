@@ -26,13 +26,28 @@ var seen = make(map[string]bool)
 var mu sync.Mutex
 
 var peers []string
+var torrentClient *torrent.Client
 
 func main() {
 
+	var clientConfig torrent.Config
+	clientConfig.Seed = true
+	clientConfig.DisableTrackers = true
+	clientConfig.NoDHT = true
+	var err error
+	torrentClient, err = torrent.NewClient(&clientConfig)
+	if err != nil {
+		log.Printf("error creating client: %s", err)
+		return
+	}
+
 	//get peers from somewhere ideally
-	peers = append(peers, "testhost")
+	//remove self from list?
+	peers = append(peers, "host2:8000")
 	http.HandleFunc("/registryNotifications", regHandler)
 	http.HandleFunc("/torrent", torrentHandler)
+
+	//Registry expects to find us on localhost:8000
 	log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
 }
 
@@ -60,15 +75,33 @@ func torrentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var t torrent.Torrent
+	var mi metainfo.MetaInfo
 	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&t); err != nil {
+	if err := dec.Decode(&mi); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("error decoding request body: %v", err)
 		return
 	}
 
-	log.Printf("got a beautiful torrent %v\n", &t)
+	//log.Printf("got some metadata %v\n", mi.)
+	log.Printf("Got torrent, retrieving")
+	seedTorrent(&mi, loadImageFromTorrent)
+	TODO: check status and add peers to torrent
+
+}
+
+func loadImageFromTorrent(t *torrent.Torrent) {
+
+	//should be a single file
+	log.Printf("Got image file: %s\n", t.Files()[0].DisplayPath())
+	t.
+	err := exec.Command("docker", "load", t.Files()[0].Path()).Run()
+	if err != nil {
+		log.Printf("Failed load %v\n", err)
+		return
+
+	}
+	log.Println("Loaded")
 
 }
 
@@ -151,27 +184,19 @@ func downloadAndSeedImage(repo string, tag string) {
 	}
 	log.Println("Saved")
 	mi := createTorrent(tmpfile)
-	seedTorrent(&mi)
+	seedTorrent(&mi, notifyPeers)
 	log.Println("Seeded")
 
 	//log.Printf("torrent: %v\n", mi)
 
 }
 
-func seedTorrent(mi *metainfo.MetaInfo) {
+func seedTorrent(mi *metainfo.MetaInfo, cb func(*torrent.Torrent)) {
 
 	//Hmm, will need to do this separately and send torrents dynamically
 	//but for the moment...
-	var clientConfig torrent.Config
-	clientConfig.Seed = true
-	clientConfig.DisableTrackers = true
-	clientConfig.NoDHT = true
-	client, err := torrent.NewClient(&clientConfig)
-	if err != nil {
-		log.Printf("error creating client: %s", err)
-		return
-	}
-	t, err := client.AddTorrent(mi)
+
+	t, err := torrentClient.AddTorrent(mi)
 	if err != nil {
 		log.Printf("error adding torrent: %s", err)
 		return
@@ -179,7 +204,7 @@ func seedTorrent(mi *metainfo.MetaInfo) {
 	go func() {
 		<-t.GotInfo()
 		t.DownloadAll()
-		notifyPeers(t)
+		cb(t)
 	}()
 
 	/*
@@ -193,13 +218,15 @@ func seedTorrent(mi *metainfo.MetaInfo) {
 
 func notifyPeers(t *torrent.Torrent) {
 
+	mi := t.Metainfo()
 	for _, p := range peers {
 
 		url := fmt.Sprintf("http://%s/torrent", p)
-		data, err := json.Marshal(t)
+		data, err := json.Marshal(mi)
 		if err != nil {
 			log.Printf("Failed to create JSON %v\n", err)
 		}
+		//log.Printf("Sending torrent JSON: %s", string(data))
 
 		r := bytes.NewReader(data)
 
