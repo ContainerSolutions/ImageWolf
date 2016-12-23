@@ -16,6 +16,10 @@ import (
 
 	"bytes"
 
+	"net"
+
+	"time"
+
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/bencode"
 	"github.com/anacrolix/torrent/metainfo"
@@ -25,15 +29,36 @@ import (
 var seen = make(map[string]bool)
 var mu sync.Mutex
 
-var peers []string
+var peers []*net.TCPAddr
+var torrentPeers []torrent.Peer //Should be ptrs IMO, but underlying lib wants copies
 var torrentClient *torrent.Client
 
 func main() {
+
+	for _, host := range os.Args[1:] {
+		tcpaddr, err := net.ResolveTCPAddr("tcp", host)
+		if err != nil {
+			//retry as other container may not be running yet
+			for i := 0; err != nil && i < 100; i++ {
+				time.Sleep(10)
+				tcpaddr, err = net.ResolveTCPAddr("tcp", host)
+			}
+		}
+		if err != nil {
+			log.Printf("expected IP Address, got %s %v\n", host, err)
+		} else {
+			log.Printf("tcp addr: %v\n", tcpaddr)
+			peers = append(peers, tcpaddr)
+			torrentPeers = append(torrentPeers, torrent.Peer{
+				IP: tcpaddr.IP, Port: 6000})
+		}
+	}
 
 	var clientConfig torrent.Config
 	clientConfig.Seed = true
 	clientConfig.DisableTrackers = true
 	clientConfig.NoDHT = true
+	clientConfig.ListenAddr = "0.0.0.0:6000"
 	var err error
 	torrentClient, err = torrent.NewClient(&clientConfig)
 	if err != nil {
@@ -41,9 +66,6 @@ func main() {
 		return
 	}
 
-	//get peers from somewhere ideally
-	//remove self from list?
-	peers = append(peers, "host2:8000")
 	http.HandleFunc("/registryNotifications", regHandler)
 	http.HandleFunc("/torrent", torrentHandler)
 
@@ -86,7 +108,7 @@ func torrentHandler(w http.ResponseWriter, r *http.Request) {
 	//log.Printf("got some metadata %v\n", mi.)
 	log.Printf("Got torrent, retrieving")
 	seedTorrent(&mi, loadImageFromTorrent)
-	TODO: check status and add peers to torrent
+	//TODO: check status and add peers to torrent
 
 }
 
@@ -94,12 +116,13 @@ func loadImageFromTorrent(t *torrent.Torrent) {
 
 	//should be a single file
 	log.Printf("Got image file: %s\n", t.Files()[0].DisplayPath())
-	t.
-	err := exec.Command("docker", "load", t.Files()[0].Path()).Run()
+	log.Printf("Got: %d bytes\n", t.BytesCompleted())
+	log.Printf("Not got: %d bytes\n", t.BytesMissing())
+
+	err := exec.Command("docker", "load", "-i", t.Files()[0].Path()).Run()
 	if err != nil {
 		log.Printf("Failed load %v\n", err)
 		return
-
 	}
 	log.Println("Loaded")
 
@@ -171,7 +194,7 @@ func downloadAndSeedImage(repo string, tag string) {
 	}
 	log.Println("Pulled")
 
-	tmpfile, err := ioutil.TempFile("", repo+tag)
+	tmpfile, err := ioutil.TempFile("/", repo+tag)
 	if err != nil {
 		log.Print(err)
 		return
@@ -197,6 +220,8 @@ func seedTorrent(mi *metainfo.MetaInfo, cb func(*torrent.Torrent)) {
 	//but for the moment...
 
 	t, err := torrentClient.AddTorrent(mi)
+
+	t.AddPeers(torrentPeers)
 	if err != nil {
 		log.Printf("error adding torrent: %s", err)
 		return
@@ -204,15 +229,12 @@ func seedTorrent(mi *metainfo.MetaInfo, cb func(*torrent.Torrent)) {
 	go func() {
 		<-t.GotInfo()
 		t.DownloadAll()
+		for t.BytesMissing() > 0 {
+			time.Sleep(1 * time.Second)
+			fmt.Printf("Got: %d bytes missing %d\n", t.BytesCompleted(), t.BytesMissing())
+		}
 		cb(t)
 	}()
-
-	/*
-		Then need to think about how to ping others and d/load...
-		Come up with way to test this using containers on same host
-		may require multiple registry instances.
-		Put reggie and reg in same container?
-	*/
 
 }
 
