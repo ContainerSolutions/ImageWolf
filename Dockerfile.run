@@ -6,10 +6,11 @@ RUN apt-get update && apt-get install -y curl
 RUN curl -sSL https://get.docker.com/ | sh
 
 ENV TINI_VERSION v0.13.2
-#TODO - get tini for right arch and check GPG key
-RUN curl -o /tini -sSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini
+#TODO - check GPG key
+RUN if [ "$arch" = "x86_64" ]; then \
+      curl -o /tini -sSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ; else \
+      curl -o /tini -sSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-armhf ; fi
 RUN chmod +x /tini
-ENTRYPOINT []
 
 COPY config.yml /etc/docker/registry/config.yml 
 COPY reggie-${arch} /reggie
