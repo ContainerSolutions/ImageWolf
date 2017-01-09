@@ -1,4 +1,4 @@
-FROM golang:1.7-wheezy
+FROM amouat/golang-multi
 
 #COPY distribution /go/src/github.com/docker/distribution
 RUN go get github.com/anacrolix/torrent/
