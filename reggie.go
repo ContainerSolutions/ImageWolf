@@ -1,23 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"mime"
-	"net/http"
-	"sync"
-
-	"fmt"
-
-	"os/exec"
-
-	"os"
-
-	"bytes"
-
 	"net"
-
+	"net/http"
+	"os"
+	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/anacrolix/torrent"
@@ -69,6 +63,7 @@ func main() {
 	http.HandleFunc("/registryNotifications", regHandler)
 	http.HandleFunc("/torrent", torrentHandler)
 
+	log.Println("Starting up")
 	//Registry expects to find us on localhost:8000
 	log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
 }
