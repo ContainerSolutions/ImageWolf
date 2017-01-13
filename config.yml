@@ -1,14 +1,15 @@
 version: 0.1
 log:
+  level: info
   fields:
     service: registry
 storage:
-  cache:
-    blobdescriptor: inmemory
   filesystem:
     rootdirectory: /var/lib/registry
 http:
   addr: :5000
+  debug:
+    addr: :5001
   headers:
     X-Content-Type-Options: [nosniff]
 health:
@@ -21,6 +22,6 @@ notifications:
     - name: reggie
       disabled: false
       url: http://localhost:8000/registryNotifications
-      timeout: 5000
-      threshold: 5
-      backoff: 1000
+#      timeout: 5000
+#      threshold: 5
+#      backoff: 1000
