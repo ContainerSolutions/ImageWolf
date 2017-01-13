@@ -18,7 +18,7 @@ trap 'sigterm' TERM
 docker pull amouat/registry-reggie
 #kill any old registry
 docker stop registry-reggie || true
-docker rm registry-reggie || true
+docker rm -f registry-reggie || true # -f needed for cases where can't be stopped e.g fs error
 docker run -d --name registry-reggie --network reggie -p 5000:5000 \
            -e REGISTRY_NOTIFICATIONS_ENDPOINTS_URL=${HOSTNAME}:8000/registryNotifications \
            amouat/registry-reggie
