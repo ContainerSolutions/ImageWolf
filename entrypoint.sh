@@ -23,5 +23,9 @@ docker run -d --name registry-reggie --network reggie -p 5000:5000 \
            -e REGISTRY_NOTIFICATIONS_ENDPOINTS_URL=${HOSTNAME}:8000/registryNotifications \
            amouat/registry-reggie
 
-#need to update this to pull registry down on exit
-exec /reggie $@
+/reggie $@ &
+
+#note that this is started with tini, so shouldn't need to pass signal to reggie
+while /usr/bin/true ; do
+  sleep 30
+done
