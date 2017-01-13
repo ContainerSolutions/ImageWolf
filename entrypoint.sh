@@ -19,8 +19,14 @@ docker pull amouat/registry-reggie
 #kill any old registry
 docker stop registry-reggie || true
 docker rm -f registry-reggie || true # -f needed for cases where can't be stopped e.g fs error
+export REGISTRY_NOTIFICATIONS_ENDPOINTS=$(cat <<EOF
+    - name: reggie
+      disabled: false
+      url: http://${HOSTNAME}:8000/registryNotifications
+EOF
+)
 docker run -d --name registry-reggie --network reggie -p 5000:5000 \
-           -e REGISTRY_NOTIFICATIONS_ENDPOINTS_URL=${HOSTNAME}:8000/registryNotifications \
+           -e REGISTRY_NOTIFICATIONS_ENDPOINTS \
            amouat/registry-reggie
 
 /reggie $@ &
