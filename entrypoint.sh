@@ -26,6 +26,6 @@ docker run -d --name registry-reggie --network reggie -p 5000:5000 \
 /reggie $@ &
 
 #note that this is started with tini, so shouldn't need to pass signal to reggie
-while /usr/bin/true ; do
+while true ; do
   sleep 30
 done
