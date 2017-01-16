@@ -23,30 +23,35 @@ import (
 var seen = make(map[string]bool)
 var mu sync.Mutex
 
-var peers []*net.TCPAddr
+var peerSet = make(map[string]bool)
+var peers []*net.IP
 var torrentPeers []torrent.Peer //Should be ptrs IMO, but underlying lib wants copies
 var torrentClient *torrent.Client
+var apiPort = 8000
 
 func main() {
 
-	for _, host := range os.Args[1:] {
-		tcpaddr, err := net.ResolveTCPAddr("tcp", host)
-		if err != nil {
-			//retry as other container may not be running yet
-			for i := 0; err != nil && i < 100; i++ {
-				time.Sleep(10)
-				tcpaddr, err = net.ResolveTCPAddr("tcp", host)
+	/*
+		//Superseded by DNS code
+			for _, host := range os.Args[1:] {
+				tcpaddr, err := net.ResolveTCPAddr("tcp", host)
+				if err != nil {
+					//retry as other container may not be running yet
+					for i := 0; err != nil && i < 100; i++ {
+						time.Sleep(10)
+						tcpaddr, err = net.ResolveTCPAddr("tcp", host)
+					}
+				}
+				if err != nil {
+					log.Printf("expected IP Address, got %s %v\n", host, err)
+				} else {
+					log.Printf("tcp addr: %v\n", tcpaddr)
+					peers = append(peers, tcpaddr)
+					torrentPeers = append(torrentPeers, torrent.Peer{
+						IP: tcpaddr.IP, Port: 6000})
+				}
 			}
-		}
-		if err != nil {
-			log.Printf("expected IP Address, got %s %v\n", host, err)
-		} else {
-			log.Printf("tcp addr: %v\n", tcpaddr)
-			peers = append(peers, tcpaddr)
-			torrentPeers = append(torrentPeers, torrent.Peer{
-				IP: tcpaddr.IP, Port: 6000})
-		}
-	}
+	*/
 
 	var clientConfig torrent.Config
 	clientConfig.Seed = true
@@ -64,12 +69,12 @@ func main() {
 	http.HandleFunc("/torrent", torrentHandler)
 
 	log.Println("Starting up")
-	getTaskAddress()
+	getPeers()
 	//Registry expects to find us on localhost:8000
-	log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", apiPort), nil))
 }
 
-func getTaskAddress() {
+func getPeers() {
 
 	ips, err := net.LookupIP("tasks.reggie")
 
@@ -80,6 +85,13 @@ func getTaskAddress() {
 
 	for c, ip := range ips {
 		log.Printf("%v %v", c, ip)
+		if !peerSet[ip.String()] {
+
+			peerSet[ip.String()] = true
+			peers = append(peers, &ip)
+			torrentPeers = append(torrentPeers, torrent.Peer{
+				IP: ip, Port: 6000})
+		}
 	}
 
 }
@@ -251,10 +263,11 @@ func seedTorrent(mi *metainfo.MetaInfo, cb func(*torrent.Torrent)) {
 
 func notifyPeers(t *torrent.Torrent) {
 
+	getPeers()
 	mi := t.Metainfo()
-	for _, p := range peers {
+	for p, _ := range peers {
 
-		url := fmt.Sprintf("http://%s/torrent", p)
+		url := fmt.Sprintf("http://%s:%d/torrent", p, apiPort)
 		data, err := json.Marshal(mi)
 		if err != nil {
 			log.Printf("Failed to create JSON %v\n", err)
