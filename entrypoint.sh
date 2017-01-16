@@ -24,6 +24,7 @@ export REGISTRY_NOTIFICATIONS_ENDPOINTS=$(cat <<EOF
     - name: reggie
       disabled: false
       url: http://${HOSTNAME}:8000/registryNotifications
+EOF
 )
 docker run -d --name registry-reggie --network reggie -p 5000:5000 \
            -e REGISTRY_NOTIFICATIONS_ENDPOINTS \
