@@ -64,8 +64,24 @@ func main() {
 	http.HandleFunc("/torrent", torrentHandler)
 
 	log.Println("Starting up")
+	getTaskAddress()
 	//Registry expects to find us on localhost:8000
 	log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
+}
+
+func getTaskAddress() {
+
+	ips, err := net.LookupIP("tasks.reggie")
+
+	if err != nil {
+		log.Printf("Error looking up tasks")
+		return
+	}
+
+	for c, ip := range ips {
+		log.Printf("%v %v", c, ip)
+	}
+
 }
 
 func torrentHandler(w http.ResponseWriter, r *http.Request) {
