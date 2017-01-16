@@ -265,9 +265,9 @@ func notifyPeers(t *torrent.Torrent) {
 
 	getPeers()
 	mi := t.Metainfo()
-	for p, _ := range peers {
+	for _, ip := range peers {
 
-		url := fmt.Sprintf("http://%s:%d/torrent", p, apiPort)
+		url := fmt.Sprintf("http://%s:%d/torrent", ip.String(), apiPort)
 		data, err := json.Marshal(mi)
 		if err != nil {
 			log.Printf("Failed to create JSON %v\n", err)
