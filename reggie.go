@@ -67,11 +67,23 @@ func main() {
 
 	http.HandleFunc("/registryNotifications", regHandler)
 	http.HandleFunc("/torrent", torrentHandler)
+	http.HandleFunc("/stats", statsHandler)
 
 	log.Println("Starting up")
 	getPeers()
-	//Registry expects to find us on localhost:8000
+	//Registry expects to find us on port 8000
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", apiPort), nil))
+}
+
+func statsHandler(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+
+	for _, tor := range torrentClient.Torrents() {
+		fmt.Fprintf(w, "Torrent: %v\n", tor.Name())
+		fmt.Fprintf(w, "br %v bw %v\n", tor.Stats().BytesRead, tor.Stats().BytesWritten)
+	}
+
 }
 
 func getPeers() {
@@ -243,6 +255,7 @@ func seedTorrent(mi *metainfo.MetaInfo, cb func(*torrent.Torrent)) {
 	//but for the moment...
 
 	t, err := torrentClient.AddTorrent(mi)
+	getPeers()
 
 	t.AddPeers(torrentPeers)
 	if err != nil {
@@ -265,19 +278,19 @@ func notifyPeers(t *torrent.Torrent) {
 
 	getPeers()
 	mi := t.Metainfo()
+	data, err := json.Marshal(mi)
+	if err != nil {
+		log.Printf("Failed to create JSON %v\n", err)
+	}
+	r := bytes.NewReader(data)
+
 	for _, ip := range peers {
 
 		url := fmt.Sprintf("http://%s:%d/torrent", ip.String(), apiPort)
-		data, err := json.Marshal(mi)
-		if err != nil {
-			log.Printf("Failed to create JSON %v\n", err)
-		}
+		fmt.Printf("Notifying: %s\n", url)
+
 		//log.Printf("Sending torrent JSON: %s", string(data))
-
-		r := bytes.NewReader(data)
-
 		http.Post(url, "application/json", r)
-
 	}
 
 }
