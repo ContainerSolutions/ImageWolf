@@ -132,6 +132,7 @@ func torrentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Got: %v\n", r.Body)
 	var mi metainfo.MetaInfo
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&mi); err != nil {
