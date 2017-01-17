@@ -24,7 +24,7 @@ var seen = make(map[string]bool)
 var mu sync.Mutex
 
 var peerSet = make(map[string]bool)
-var peers []*net.IP
+var peers []net.IP
 var torrentPeers []torrent.Peer //Should be ptrs IMO, but underlying lib wants copies
 var torrentClient *torrent.Client
 var apiPort = 8000
@@ -100,7 +100,7 @@ func getPeers() {
 		if !peerSet[ip.String()] {
 
 			peerSet[ip.String()] = true
-			peers = append(peers, &ip)
+			peers = append(peers, ip)
 			torrentPeers = append(torrentPeers, torrent.Peer{
 				IP: ip, Port: 6000})
 		}
