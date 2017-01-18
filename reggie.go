@@ -290,8 +290,8 @@ func notifyPeers(t *torrent.Torrent) {
 
 		//fmt.Printf("Sending ben bytes: %s", data)
 		//log.Printf("Sending torrent JSON: %s", string(data))
-		resp, err := http.Post(url, "application/octet-stream", bytes.NewReader(data))
-		resp.Body.Close()
+		_, err := http.Post(url, "application/octet-stream", bytes.NewReader(data))
+		//resp.Body.Close()
 		if err != nil {
 			fmt.Printf("notify responded with err %v\n", err)
 		}
