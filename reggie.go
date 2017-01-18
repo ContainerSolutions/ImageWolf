@@ -126,15 +126,14 @@ func torrentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if mediaType != "application/json" {
+	if mediaType != "application/octet-stream" {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-		log.Printf("incorrect media type: %q != %q", mediaType, "application/json")
+		log.Printf("incorrect media type: %q != %q", mediaType, "application/octet-stream")
 		return
 	}
 
-	log.Printf("Got: %v\n", r.Body)
 	var mi metainfo.MetaInfo
-	dec := json.NewDecoder(r.Body)
+	dec := bencode.NewDecoder(r.Body)
 	if err := dec.Decode(&mi); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("error decoding request body: %v", err)
@@ -279,19 +278,23 @@ func notifyPeers(t *torrent.Torrent) {
 
 	getPeers()
 	mi := t.Metainfo()
-	data, err := json.Marshal(mi)
+	data, err := bencode.Marshal(mi)
 	if err != nil {
 		log.Printf("Failed to create JSON %v\n", err)
 	}
-	r := bytes.NewReader(data)
 
 	for _, ip := range peers {
 
 		url := fmt.Sprintf("http://%s:%d/torrent", ip.String(), apiPort)
 		fmt.Printf("Notifying: %s\n", url)
 
+		//fmt.Printf("Sending ben bytes: %s", data)
 		//log.Printf("Sending torrent JSON: %s", string(data))
-		http.Post(url, "application/json", r)
+		resp, err := http.Post(url, "application/octet-stream", bytes.NewReader(data))
+		resp.Body.Close()
+		if err != nil {
+			fmt.Printf("notify responded with err %v\n", err)
+		}
 	}
 
 }

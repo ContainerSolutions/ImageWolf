@@ -26,7 +26,7 @@ export REGISTRY_NOTIFICATIONS_ENDPOINTS=$(cat <<EOF
       url: http://${HOSTNAME}:8000/registryNotifications
 EOF
   )
-docker run -d --name registry-reggie --network reggie -p 5000:5000 \
+docker run -d --name registry-reggie --network reggie -p 5000:5000 -p 5001:5001 \
            -e REGISTRY_NOTIFICATIONS_ENDPOINTS \
            amouat/registry-reggie
 
