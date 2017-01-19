@@ -31,28 +31,6 @@ var apiPort = 8000
 
 func main() {
 
-	/*
-		//Superseded by DNS code
-			for _, host := range os.Args[1:] {
-				tcpaddr, err := net.ResolveTCPAddr("tcp", host)
-				if err != nil {
-					//retry as other container may not be running yet
-					for i := 0; err != nil && i < 100; i++ {
-						time.Sleep(10)
-						tcpaddr, err = net.ResolveTCPAddr("tcp", host)
-					}
-				}
-				if err != nil {
-					log.Printf("expected IP Address, got %s %v\n", host, err)
-				} else {
-					log.Printf("tcp addr: %v\n", tcpaddr)
-					peers = append(peers, tcpaddr)
-					torrentPeers = append(torrentPeers, torrent.Peer{
-						IP: tcpaddr.IP, Port: 6000})
-				}
-			}
-	*/
-
 	var clientConfig torrent.Config
 	clientConfig.Seed = true
 	clientConfig.DisableTrackers = true
@@ -139,11 +117,8 @@ func torrentHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("error decoding request body: %v", err)
 		return
 	}
-
-	//log.Printf("got some metadata %v\n", mi.)
 	log.Printf("Got torrent, retrieving")
 	seedTorrent(&mi, loadImageFromTorrent)
-	//TODO: check status and add peers to torrent
 
 }
 
@@ -212,14 +187,12 @@ func regHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK\n")
 
 	//filter on action push and mediatype manifest?
-	//ignore layers for moment
-	//then pull given image
-	//call ronnie / wellbourne?
 
 }
 
 func downloadAndSeedImage(repo string, tag string) {
-	//Could directly use API rather than docker pull?
+
+	//Could directly use API rather than docker pull
 	imageName := fmt.Sprintf("%s/%s:%s", "localhost:5000", repo, tag)
 	err := exec.Command("docker", "pull", imageName).Run()
 	if err != nil {
@@ -243,16 +216,11 @@ func downloadAndSeedImage(repo string, tag string) {
 	log.Println("Saved")
 	mi := createTorrent(tmpfile)
 	seedTorrent(&mi, notifyPeers)
-	log.Println("Seeded")
-
-	//log.Printf("torrent: %v\n", mi)
+	log.Println("Seeding")
 
 }
 
 func seedTorrent(mi *metainfo.MetaInfo, cb func(*torrent.Torrent)) {
-
-	//Hmm, will need to do this separately and send torrents dynamically
-	//but for the moment...
 
 	t, err := torrentClient.AddTorrent(mi)
 	getPeers()
@@ -288,10 +256,7 @@ func notifyPeers(t *torrent.Torrent) {
 		url := fmt.Sprintf("http://%s:%d/torrent", ip.String(), apiPort)
 		fmt.Printf("Notifying: %s\n", url)
 
-		//fmt.Printf("Sending ben bytes: %s", data)
-		//log.Printf("Sending torrent JSON: %s", string(data))
 		_, err := http.Post(url, "application/octet-stream", bytes.NewReader(data))
-		//resp.Body.Close()
 		if err != nil {
 			fmt.Printf("notify responded with err %v\n", err)
 		}
