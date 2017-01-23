@@ -6,20 +6,23 @@ set -e
 # Assume reggie is running on 5000 and normal registry on 6000
 # normal registry should be exposed on mesh network
 
+docker service rm compare_test_1 compare_test_2 || true
 docker pull amouat/large-image-arm:100
 docker tag amouat/large-image-arm:100 localhost:5000/large-image-arm:100
 docker tag amouat/large-image-arm:100 localhost:6000/large-image-arm:100
+#To avoid pinning to RepoID, need to use SHA
+image_sha=$(docker inspect --format {{.Id}} localhost:5000/large-image-arm:100)
 
 start_reggie=$(date +%s%N)
-docker service create --name compare_test_1 --mode global localhost:5000/large_image-arm:100
+docker service create --name compare_test_1 --mode global $image_sha
 docker push localhost:5000/large-image-arm:100
 
 ready=$(docker service ls -f name=compare_test_1 | \
-  awk 'NR==2 {split($4,a,"/"); if (a[1] != a[2]){ echo 1; exit 1} }')
+  awk 'NR==2 {split($4,a,"/"); if (a[1] != a[2]){ print "1" } else { print "0" }}')
 
 while [[ $ready != "0" ]]; do
   ready=$(docker service ls -f name=compare_test_1 | \
-    awk 'NR==2 {split($4,a,"/"); if (a[1] != a[2]){ echo 1; exit 1} }')
+    awk 'NR==2 {split($4,a,"/"); if (a[1] != a[2]){ print "1" } else { print "0" }}')
   # don't like this sleep in a timed loop....
   sleep 0.1
 done
