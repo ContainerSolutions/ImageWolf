@@ -33,10 +33,17 @@ echo "Reggie took: " $(($stop_reggie-$start_reggie)) "ns"
 docker service rm compare_test_1
 
 start_classic=$(date +%s%N)
-docker service create --mode global localhost:6000/large_image:unique_code compare_test
+docker service create --mode global localhost:6000/large-image-arm:100 compare_test_2
 docker push localhost:6000/large-image-arm:100
-docker service ls -f name=reggie | awk 'NR==2 {split($4,a,"/"); if (a[1] != a[2]){ exit 1} }'
-stop_classic=$(date +%s%N)
+ready=$(docker service ls -f name=compare_test_2 | \
+  awk 'NR==2 {split($4,a,"/"); if (a[1] != a[2]){ print "1" } else { print "0" }}')
+
+while [[ $ready != "0" ]]; do
+  ready=$(docker service ls -f name=compare_test_2 | \
+    awk 'NR==2 {split($4,a,"/"); if (a[1] != a[2]){ print "1" } else { print "0" }}')
+  # don't like this sleep in a timed loop....
+  sleep 0.1
+done
 
 
 echo "Classic took: " $(($stop_classic-$start_classic)) "ns"
