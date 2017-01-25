@@ -1,0 +1,10 @@
+image: amouat/golang-multi:latest
+manifests:
+  - image: golang:1.7-wheezy
+    platform:
+      architecture: amd64
+      os: linux
+  - image: amouat/golang-arm
+    platform:
+      architecture: arm
+      os: linux

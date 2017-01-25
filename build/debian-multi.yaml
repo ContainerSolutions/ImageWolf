@@ -1,0 +1,10 @@
+image: amouat/debian-multi:latest
+manifests:
+  - image: debian:latest
+    platform:
+      architecture: amd64
+      os: linux
+  - image: armhf/debian:latest
+    platform:
+      architecture: arm
+      os: linux
