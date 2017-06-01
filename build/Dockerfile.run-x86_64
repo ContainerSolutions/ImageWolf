@@ -3,13 +3,6 @@ FROM debian
 RUN apt-get update && apt-get install -y curl
 RUN curl -sSL https://get.docker.com/ | sh
 
-ENV TINI_VERSION v0.13.2
-#TODO - check GPG key
-RUN curl -o /tini -sSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini
-RUN chmod +x /tini
-
 COPY build/config.yml /etc/docker/registry/config.yml 
 COPY bin/reggie-x86_64 /reggie
-COPY bin/registry-x86_64 /registry
-COPY build/entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/tini", "-g", "--", "/entrypoint.sh"]
+ENTRYPOINT ["/reggie"]
