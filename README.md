@@ -20,7 +20,7 @@ to spread images around the cluster as they are pushed.
 The PoC was developed for Docker Swarm Mode. If there is sufficient interest,
 versions for Kubernetes and other cluster managers will follow. Reggie is
 currently alpha software and intended as a PoC - please don't run it in
-production! Reggie will run on both regular x86_64 architectures and ARM.
+production!
 
 To start Reggie, run:
 
@@ -28,7 +28,7 @@ To start Reggie, run:
 docker network create -d overlay --attachable reggie
 docker service create --network reggie --name reggie --mode global \
        --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
-       amouat/reggie-armv7l
+       amouat/reggie
 ```
 
 Now we have a Reggie instance running across all nodes in our cluster.
@@ -106,8 +106,8 @@ achieve many of the benefits of Reggie.
 ## Multiarch
 
 Reggie was tested on a Raspberry PI cluster as well as in the Google cloud. You
-should find that the above instructions work identically on 32-bit ARM as well
-as amd64 through the magic of multi-arch images.
+should find that the above instructions work identically on 32-bit ARM (armv7l)
+as well as x86_64 through the magic of multi-arch images.
 
 ## Bugs & Improvements
 
