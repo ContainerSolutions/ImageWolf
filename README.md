@@ -1,5 +1,5 @@
 Reggie - The Cluster-first Image Registry
-##=======================================
+=========================================
 
 Reggie is a PoC into building a "cluster-first registry" for Docker images. The
 purpose of reggie is to provide a blazingly fast way to get new images loaded
