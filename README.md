@@ -36,7 +36,7 @@ Now we have a Reggie instance running across all nodes in our cluster.
 The next step is to link Reggie with a registry. Whenever an image is pushed to
 the registry, Reggie will immediately pull it and distribute across all the
 nodes. At the moment Reggie only works with the private Docker registry and will
-trigger for all pushed images. To set up a private registry linked to Reggie:
+distribute all pushed images. To set up a private registry linked to Reggie:
 
 
 ```
@@ -53,6 +53,7 @@ export REGISTRY_NOTIFICATIONS_ENDPOINTS=$(cat <<EOF
 EOF
 )
 
+# Start up a single instance of the registry
 docker run -d --name registry-reggie --network reggie -p 5000:5000 -p 5001:5001 \
            -e REGISTRY_NOTIFICATIONS_ENDPOINTS \
            amouat/registry-reggie
@@ -62,11 +63,20 @@ docker run -d --name registry-reggie --network reggie -p 5000:5000 -p 5001:5001 
 You can then push an image to the registry running on the local node:
 
 ```
-
+docker tag alpine localhost:5000/myimage
+docker push localhost:5000/myimage
 ```
 
-And you should find that it is quickly copied to the other nodes. If you want to
-run a service with 
+Reggie should immediately see the push and distribute the image to the other
+nodes. You can see what's going on by running `docker service logs reggie`.
+
+We can now start another global service using this image:
+
+```
+TK
+```
+
+TK say something aobut speed, large images
 
 == Integration with Docker Hub
 
@@ -93,13 +103,21 @@ the node).
 Using a global or distributed file system to back a Docker registry will also
 achieve many of the benefits of Reggie. 
 
+== Multiarch
+
+Reggie was tested on a Raspberry PI cluster as well as in the Google cloud. You
+should find that the above instructions work identically on 32-bit ARM as well
+as amd64 through the magic of multi-arch images.
+
 == Bugs & Improvements
 
 Reggie is a PoC currently and there are a lot of rough edges:
 
  - Services have to be started using the Image ID to avoid repo pinning problems
  - No optimisations have been carried out
- - Using the Docker CLI and sock is a bit hacky
+ - The internal use of the Docker CLI and sock is a bit hacky
+ - Swarm will attempt to pull images on nodes at the same time as Reggie is
+   distributing the image
 
 Assuming there is interest in Reggie, the next step will be to change the hacked
 together code into a coherent solution.
