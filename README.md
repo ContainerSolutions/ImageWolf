@@ -1,5 +1,5 @@
 Reggie - The Cluster-first Image Registry
-=========================================
+##=======================================
 
 Reggie is a PoC into building a "cluster-first registry" for Docker images. The
 purpose of reggie is to provide a blazingly fast way to get new images loaded
@@ -13,9 +13,9 @@ whereas Reggie provides a cluster-local cache of the images.
 The PoC for Reggie uses the BitTorrent protocol and the existing Docker registry
 to spread images around the cluster as they are pushed.
 
-== Video
+## Video
 
-== Getting Started
+## Getting Started
 
 The PoC was developed for Docker Swarm Mode. If there is sufficient interest,
 versions for Kubernetes and other cluster managers will follow. Reggie is
@@ -78,7 +78,7 @@ TK
 
 TK say something aobut speed, large images
 
-== Integration with Docker Hub
+## Integration with Docker Hub
 
 The Docker Hub has a web hooks feature which can be used to call a remote
 service when an image is pushed. When Reggie recieves the callback, it can then
@@ -87,7 +87,7 @@ faster than all nodes pulling individually from the Docker Hub.
 
 This isn't implemented yet, but it should be straightforward. 
 
-== Stats
+## Stats
 
 There are no hard numbers yet.
 
@@ -98,18 +98,18 @@ time taken to deploy new versions as pulls are performed in serial (in reggie
 the startup time of containers will be much faster as the image is already on
 the node).
 
-== Other Approaches
+## Other Approaches
 
 Using a global or distributed file system to back a Docker registry will also
 achieve many of the benefits of Reggie. 
 
-== Multiarch
+## Multiarch
 
 Reggie was tested on a Raspberry PI cluster as well as in the Google cloud. You
 should find that the above instructions work identically on 32-bit ARM as well
 as amd64 through the magic of multi-arch images.
 
-== Bugs & Improvements
+## Bugs & Improvements
 
 Reggie is a PoC currently and there are a lot of rough edges:
 
@@ -122,7 +122,7 @@ Reggie is a PoC currently and there are a lot of rough edges:
 Assuming there is interest in Reggie, the next step will be to change the hacked
 together code into a coherent solution.
 
-== Feedback
+## Feedback
 
 This is a PoC. If it is useful or interesting to you, please get in touch and
 let us know.
