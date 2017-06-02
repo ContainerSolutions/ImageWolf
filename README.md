@@ -13,8 +13,6 @@ whereas Reggie provides a cluster-local cache of the images.
 The PoC for Reggie uses the BitTorrent protocol and the existing Docker registry
 to spread images around the cluster as they are pushed.
 
-## Video
-
 ## Getting Started
 
 The PoC was developed for Docker Swarm Mode. If there is sufficient interest,
@@ -63,7 +61,7 @@ docker run -d --name registry-reggie --network reggie -p 5000:5000 -p 5001:5001 
 You can then push an image to the registry running on the local node:
 
 ```
-docker tag alpine localhost:5000/myimage
+docker tag redis localhost:5000/myimage
 docker push localhost:5000/myimage
 ```
 
@@ -73,10 +71,14 @@ nodes. You can see what's going on by running `docker service logs reggie`.
 We can now start another global service using this image:
 
 ```
-TK
+# Use the digest of the image to avoid problems with repo lookups
+IMAGE_HASH=$(docker inspect --format {{.Id}} localhost:5000/pg)
+docker service create --name test-service --mode global $IMAGE_HASH
 ```
 
-TK say something aobut speed, large images
+In order to monitor progress, you can either pass `-d=false` when starting the
+service or run `docker service ps test-service`. Note that nodes will reject
+jobs until Reggie completes loading the image onto the node.
 
 ## Integration with Docker Hub
 
