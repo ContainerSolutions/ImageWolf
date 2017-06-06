@@ -10,6 +10,10 @@ as well as self-hosted registries.
 The PoC for ImageWolf uses the BitTorrent protocol and the existing Docker
 registry to spread images around the cluster as they are pushed.
 
+## Video
+
+[![asciicast](https://asciinema.org/a/daxitru2u4dac7zz9vo45h70u.png)](https://asciinema.org/a/daxitru2u4dac7zz9vo45h70u)
+
 ## Getting Started
 
 The PoC was developed for Docker Swarm Mode. If there is sufficient interest,
