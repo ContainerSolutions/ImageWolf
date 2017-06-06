@@ -2,14 +2,14 @@
 
 set -e
 
-docker build -t reggie-build --file build/Dockerfile.build-multi .
-docker run -d --name reggie-temp reggie-build sleep 1h
-docker cp reggie-temp:/reggie-arm ./bin/reggie-arm
-docker cp reggie-temp:/reggie-x86_64 ./bin/reggie-x86_64
-docker rm -f reggie-temp
-docker build -t amouat/reggie-armv7l --file build/Dockerfile.run-armv7l .
-docker push amouat/reggie-armv7l
-docker build -t amouat/reggie-x86_64 --file build/Dockerfile.run-x86_64 .
-docker push amouat/reggie-x86_64
+docker build -t imagewolf-build --file build/Dockerfile.build-multi .
+docker run -d --name imagewolf-temp imagewolf-build sleep 1h
+docker cp imagewolf-temp:/imagewolf-arm ./bin/reggie-arm
+docker cp imagewolf-temp:/imagewolf-x86_64 ./bin/reggie-x86_64
+docker rm -f imagewolf-temp
+docker build -t containersol/imagewolf-armv7l --file build/Dockerfile.run-armv7l .
+docker push containersol/imagewolf-armv7l
+docker build -t containersol/imagewolf-x86_64 --file build/Dockerfile.run-x86_64 .
+docker push containersol/imagewolf-x86_64
 
-manifest pushml ./reggie.yaml
+manifest pushml ./imagewolf.yaml

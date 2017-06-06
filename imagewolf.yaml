@@ -1,0 +1,11 @@
+image: containersol/imagewolf:latest
+manifests:
+  - image: containersol/imagewolf-x86_64:latest
+    platform:
+      architecture: amd64
+      os: linux
+  - image: containersol/imagewolf-armv7l:latest
+    platform:
+      architecture: arm
+      os: linux
+
