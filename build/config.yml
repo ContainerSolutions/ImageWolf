@@ -19,7 +19,7 @@ health:
     threshold: 3
 notifications:
   endpoints:
-    - name: reggie
+    - name: imagewolf
       disabled: false
       url: http://localhost:8000/registryNotifications
 #      timeout: 5000

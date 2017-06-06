@@ -66,7 +66,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 
 func getPeers() {
 
-	ips, err := net.LookupIP("tasks.reggie")
+	ips, err := net.LookupIP("tasks.imagewolf")
 
 	if err != nil {
 		log.Printf("Error looking up tasks")

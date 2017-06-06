@@ -6,5 +6,5 @@ RUN apt-get update && apt-get install -y curl
 RUN curl -sSL https://get.docker.com/ | sh
 
 COPY build/config.yml /etc/docker/registry/config.yml 
-COPY bin/reggie-${ARCH} /reggie
-ENTRYPOINT ["/reggie"]
+COPY bin/imagewolf-${ARCH} /imagewolf
+ENTRYPOINT ["/imagewolf"]
