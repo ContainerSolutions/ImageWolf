@@ -23,7 +23,7 @@ To start ImageWolf, run the following on your Swarm master:
 docker network create -d overlay --attachable wolf
 docker service create --network wolf --name imagewolf --mode global \
        --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
-       amouat/imagewolf
+       containersol/imagewolf
 ```
 
 The ImageWolf service is now running on all nodes in our cluster.
@@ -51,7 +51,7 @@ EOF
 # Start up a single instance of the registry
 docker run -d --name registry-wolf --network wolf -p 5000:5000 -p 5001:5001 \
            -e REGISTRY_NOTIFICATIONS_ENDPOINTS \
-           amouat/registry-wolf
+           containersol/registry-wolf
 ```
 
 
