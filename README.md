@@ -12,7 +12,7 @@ cluster as they are pushed.
 
 ## Video
 
-[![asciicast](https://asciinema.org/a/0DGYrQkvCH3FB1QWuL3KyLEW5.png)](https://asciinema.org/a/0DGYrQkvCH3FB1QWuL3KyLEW5)
+[![asciicast](https://asciinema.org/a/DowEjf7Inqhtu4ZQsvZfA2b0j.png)](https://asciinema.org/a/DowEjf7Inqhtu4ZQsvZfA2b0j)
 
 ## Getting Started
 
