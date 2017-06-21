@@ -1,14 +1,14 @@
 ImageWolf - Quick Distribution of Images on Clusters
 ====================================================
 
-ImageWolf is a PoC that provides a blazingly fast way to get new Docker images
+ImageWolf is a PoC that provides a blazingly fast way to get Docker images
 loaded onto your cluster, allowing updates to be pushed out quicker.
 
 ImageWolf works alongside existing registries such as the Docker Hub, Quay.io
 as well as self-hosted registries. 
 
-The PoC for ImageWolf uses the BitTorrent protocol and the existing Docker
-registry to spread images around the cluster as they are pushed.
+The PoC for ImageWolf uses the BitTorrent protocol spread images around the
+cluster as they are pushed.
 
 ## Video
 
@@ -34,8 +34,7 @@ The ImageWolf service is now running on all nodes in our cluster.
 
 The next step is to link ImageWolf with a registry. Whenever an image is pushed to
 the registry, ImageWolf will immediately pull it and distribute across all the
-nodes. At the moment ImageWolf only works with the private Docker registry and will
-distribute all pushed images. To set up a private registry linked to ImageWolf:
+nodes. To set up a private registry linked to ImageWolf:
 
 
 ```
@@ -84,18 +83,23 @@ jobs until ImageWolf completes loading the image onto the node.
 ## Integration with Docker Hub
 
 The Docker Hub has a web hooks feature which can be used to call a remote
-service when an image is pushed. When ImageWolf recieves the callback, it can then
-pull the image and distribute to the cluster, which will be *significantly*
+service when an image is pushed. When ImageWolf receives the callback, it will
+pull the image and distribute to the cluster, which is *significantly*
 faster than all nodes pulling individually from the Docker Hub.
 
-This isn't implemented yet, but it should be straightforward. 
+To use this feature, you will need to expose the ImageWolf service so that it is
+accessible to the Hub. This can be done by adding the flag `-p 8000:8000` to the
+`service create` command. You can then add the URL or IP address of your server
+as a webhook, specifying hubNotifications as the path e.g:
+http://mycluster.com/hubNotifications. If your cluster runs on a internal
+network you can use a service such as ngrok to forward calls.
 
 ## Stats
 
 There are no hard numbers yet.
 
 The real improvements are expected on large clusters, where multiple Docker
-engines pull images simultaneuously. Also whilst a ramped deployment may avoid
+engines pull images simultaneously. Also whilst a ramped deployment may avoid
 the "stampeding herd" problem swamping the registry, deployment times will still
 be longer as whenever a container is deployed to a node without the image a new
 pull will take place - with ImageWolf the image will already be on the node and
@@ -103,7 +107,7 @@ the container will start immediately.
 
 ## Other Approaches
 
-Using a global or distributed file system to back a Docker registry will also
+Using a global or distributed file system to back a Docker registry can also
 achieve many of the benefits of ImageWolf. 
 
 ## Multiarch
@@ -119,8 +123,9 @@ ImageWolf is a PoC currently and there are a lot of rough edges:
  - Services have to be started using the Image ID to avoid repo pinning problems
  - No optimisations have been carried out
  - The internal use of the Docker CLI and sock is a bit hacky
- - Swarm will attempt to pull images on nodes at the same time as ImageWolf is
-   distributing the image
+ - If ImageWolf is still distributing the image when a service is created, nodes
+   will attempt to pull from the registry simultaneous with ImageWolf pushing
+   the image
 
 Assuming there is interest in ImageWolf, the next step will be to change the hacked
 together code into a coherent solution.
