@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,10 +29,13 @@ var peers []net.IP
 var torrentPeers []torrent.Peer //Should be ptrs IMO, but underlying lib wants copies
 var torrentClient *torrent.Client
 var apiPort = 8000
+var dataDir = "/data"
+var myIps = make(map[string]bool)
 
 func main() {
 
 	var clientConfig torrent.Config
+	clientConfig.DataDir = dataDir
 	clientConfig.Seed = true
 	clientConfig.DisableTrackers = true
 	clientConfig.NoDHT = true
@@ -44,13 +48,40 @@ func main() {
 	}
 
 	http.HandleFunc("/registryNotifications", regHandler)
+	http.HandleFunc("/hubNotifications", hubHandler)
 	http.HandleFunc("/torrent", torrentHandler)
 	http.HandleFunc("/stats", statsHandler)
 
 	log.Println("Starting up")
+	getMyIps()
 	getPeers()
 	//Registry expects to find us on port 8000
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", apiPort), nil))
+}
+
+func getMyIps() {
+
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		log.Printf("Failed to inspect my network interfaces %v\n", err)
+	}
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			log.Printf("Failed to inspect network addresses %v\n", err)
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			log.Printf("Found my IP %s\n", ip.String())
+			myIps[ip.String()] = true
+		}
+	}
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,8 +105,9 @@ func getPeers() {
 	}
 
 	for c, ip := range ips {
-		log.Printf("%v %v", c, ip)
-		if !peerSet[ip.String()] {
+
+		if !peerSet[ip.String()] && !myIps[ip.String()] {
+			log.Printf("%v %v", c, ip)
 
 			peerSet[ip.String()] = true
 			peers = append(peers, ip)
@@ -125,11 +157,10 @@ func torrentHandler(w http.ResponseWriter, r *http.Request) {
 func loadImageFromTorrent(t *torrent.Torrent) {
 
 	//should be a single file
-	log.Printf("Got image file: %s\n", t.Files()[0].DisplayPath())
 	log.Printf("Got: %d bytes\n", t.BytesCompleted())
 	log.Printf("Not got: %d bytes\n", t.BytesMissing())
 
-	err := exec.Command("docker", "load", "-i", t.Files()[0].Path()).Run()
+	err := exec.Command("docker", "load", "-i", dataDir+"/"+t.Files()[0].Path()).Run()
 	if err != nil {
 		log.Printf("Failed load %v\n", err)
 		return
@@ -178,7 +209,8 @@ func regHandler(w http.ResponseWriter, r *http.Request) {
 			e.Target.MediaType == "application/vnd.docker.distribution.manifest.v2+json" {
 			seen[e.ID] = true
 			logEvent(e)
-			downloadAndSeedImage(e.Target.Repository, e.Target.Tag)
+			//Probably need to put this in a go func, but want to make sure not rc
+			downloadAndSeedImage("localhost:5000", e.Target.Repository, e.Target.Tag)
 		}
 		mu.Unlock()
 	}
@@ -190,19 +222,65 @@ func regHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func downloadAndSeedImage(repo string, tag string) {
+func hubHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		log.Printf("unexpected request method: %v", r.Method)
+		return
+	}
+
+	// Extract the content type and make sure it matches
+	contentType := r.Header.Get("Content-Type")
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("error parsing media type: %v, contenttype=%q", err, contentType)
+		return
+	}
+
+	if mediaType != "application/json" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		log.Printf("incorrect media type: %q != %q", mediaType, "application/json")
+		return
+	}
+
+	var hubEvent map[string]interface{}
+
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&hubEvent); err != nil {
+		log.Printf("Failed to read JSON from Hub")
+		panic(err)
+	}
+	pd := hubEvent["push_data"].(map[string]interface{})
+	tag := pd["tag"].(string)
+	rep := hubEvent["repository"].(map[string]interface{})
+	repoName := rep["repo_name"].(string)
+
+	if tag != "" && repoName != "" {
+		go func() {
+			downloadAndSeedImage("docker.io", repoName, tag)
+		}()
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Recieved notification of update to %s:%s\n", repoName, tag)
+
+}
+
+func downloadAndSeedImage(registry string, repo string, tag string) {
 
 	//Could directly use API rather than docker pull
-	imageName := fmt.Sprintf("%s/%s:%s", "localhost:5000", repo, tag)
+	imageName := fmt.Sprintf("%s/%s:%s", registry, repo, tag)
 	err := exec.Command("docker", "pull", imageName).Run()
 	if err != nil {
-		log.Printf("Failed pull %v\n", err)
+		log.Printf("Failed pull of %s %v\n", imageName, err)
 		return
 
 	}
 	log.Println("Pulled")
 
-	tmpfile, err := ioutil.TempFile("/", repo+tag)
+	tmpfile, err := ioutil.TempFile(dataDir, strings.Replace(repo+tag, "/", "", -1))
 	if err != nil {
 		log.Print(err)
 		return
@@ -232,7 +310,9 @@ func seedTorrent(mi *metainfo.MetaInfo, cb func(*torrent.Torrent)) {
 	}
 	go func() {
 		<-t.GotInfo()
+
 		t.DownloadAll()
+
 		for t.BytesMissing() > 0 {
 			time.Sleep(1 * time.Second)
 			log.Printf("Got: %d bytes missing %d\n", t.BytesCompleted(), t.BytesMissing())

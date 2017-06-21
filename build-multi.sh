@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#Run this if issues with exec format
+#docker run --rm --privileged multiarch/qemu-user-static:register --reset
 set -e
 
 docker build -t imagewolf-build --file build/Dockerfile.build-multi .
