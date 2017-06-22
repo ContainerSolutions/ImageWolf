@@ -1,5 +1,5 @@
-ImageWolf - Quick Distribution of Images on Clusters
-====================================================
+ImageWolf - Fast Distribution of Docker Images on Clusters
+==========================================================
 
 ImageWolf is a PoC that provides a blazingly fast way to get Docker images
 loaded onto your cluster, allowing updates to be pushed out quicker.
