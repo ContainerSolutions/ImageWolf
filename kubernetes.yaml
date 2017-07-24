@@ -53,10 +53,12 @@ spec:
     spec:
       containers:
       - name: imagewolf
-        image: containersol/imagewolf-x86_64:latest
+        image: moredhel/imagewolf:v8
         env:
         - name: LOOKUP_HOST
           value: imagewolf-headless
+        - name: DOCKER_API_VERSION
+          value: "1.23"
         ports:
         - containerPort: 6000
         - containerPort: 8000
