@@ -1,0 +1,71 @@
+#
+# Listen to registry webhook
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: imagewolf
+  labels:
+    app: imagewolf
+spec:
+  type: LoadBalancer
+  ports:
+  - name: api-port
+    port: 80
+    targetPort: 8000
+  selector:
+    app: imagewolf
+---
+#
+# Headless service used to discover peers
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: imagewolf-headless
+  labels:
+    app: imagewolf
+spec:
+  clusterIP: None
+  ports:
+  - name: torrent-client
+    port: 6000
+    targetPort: 6000
+  selector:
+    app: imagewolf
+---
+#
+# DaemonSet to make sure we have ImageWolf deployed on every nodes
+#
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: imagewolf
+spec:
+  selector:
+    matchLabels:
+      app: imagewolf
+  template:
+    metadata:
+      name: imagewolf
+      labels:
+        app: imagewolf
+    spec:
+      containers:
+      - name: imagewolf
+        image: moredhel/imagewolf:v8
+        env:
+        - name: LOOKUP_HOST
+          value: imagewolf-headless
+        - name: DOCKER_API_VERSION
+          value: "1.23"
+        ports:
+        - containerPort: 6000
+        - containerPort: 8000
+        volumeMounts:
+        - name: docker
+          mountPath: /var/run/docker.sock
+      volumes:
+      - name: docker
+        hostPath:
+          path: /var/run/docker.sock

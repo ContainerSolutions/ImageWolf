@@ -5,21 +5,28 @@ ImageWolf is a PoC that provides a blazingly fast way to get Docker images
 loaded onto your cluster, allowing updates to be pushed out quicker.
 
 ImageWolf works alongside existing registries such as the Docker Hub, Quay.io
-as well as self-hosted registries. 
+as well as self-hosted registries.
 
 The PoC for ImageWolf uses the BitTorrent protocol spread images around the
 cluster as they are pushed.
 
 ## Video
 
+### Docker Swarm
+
 [![asciicast](https://asciinema.org/a/DowEjf7Inqhtu4ZQsvZfA2b0j.png)](https://asciinema.org/a/DowEjf7Inqhtu4ZQsvZfA2b0j)
+
+### Kubernetes
+
+[![asciicast](https://asciinema.org/a/01rQtDxr67y4Gtu85KpBJ9cz2.png)](https://asciinema.org/a/01rQtDxr67y4Gtu85KpBJ9cz2)
+
 
 ## Getting Started
 
-The PoC was developed for Docker Swarm Mode. If there is sufficient interest,
-versions for Kubernetes and other cluster managers will follow. ImageWolf is
-currently alpha software and intended as a PoC - please don't run it in
+ImageWolf is currently alpha software and intended as a PoC - please don't run it in
 production!
+
+### Docker Swarm Mode
 
 To start ImageWolf, run the following on your Swarm master:
 
@@ -80,6 +87,49 @@ In order to monitor progress, you can either pass `-d=false` when starting the
 service or run `docker service ps test-service`. Note that nodes will reject
 jobs until ImageWolf completes loading the image onto the node.
 
+### Kubernetes
+
+In Kubernetes, there is the [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
+concept which ensures that all (or some) nodes run a copy of a pod. As nodes
+are added to the cluster, pods are added to them. As nodes are removed from the
+cluster, those pods are garbage collected.
+
+Then a [headless Service](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services)
+is created allowing ImageWolf to discover all the peers.
+
+
+To start ImageWolf, deploy the DaemonSet and its associated headless Service using
+the following command:
+
+```
+kubectl apply -f kubernetes.yaml
+```
+
+Testing:
+
+```
+# You may need to wait few minutes before Kubernetes display the service public IP
+export IMAGEWOLF_IP=$(kubectl get svc imagewolf --no-headers | awk '{print $3}')
+
+# Simulate a Docker Hub webhook
+curl "${IMAGEWOLF_IP}/hubNotifications" \
+   -H 'Content-Type: application/json' \
+   -d '{
+      "push_data": {
+         "tag": "latest"
+      },
+      "repository": {
+         "repo_name": "redis"
+      }
+   }'
+
+# Inspect the logs
+kubectl logs -l app=imagewolf
+
+# Check the stats
+curl "${IMAGEWOLF_IP}/stats"
+```
+
 ## Integration with Docker Hub
 
 The Docker Hub has a web hooks feature which can be used to call a remote
@@ -108,7 +158,7 @@ the container will start immediately.
 ## Other Approaches
 
 Using a global or distributed file system to back a Docker registry can also
-achieve many of the benefits of ImageWolf. 
+achieve many of the benefits of ImageWolf.
 
 ## Multiarch
 
@@ -126,6 +176,7 @@ ImageWolf is a PoC currently and there are a lot of rough edges:
  - If ImageWolf is still distributing the image when a service is created, nodes
    will attempt to pull from the registry simultaneous with ImageWolf pushing
    the image
+ - Allow Google Cloud Platform container registry webhook using [Pub/Sub](https://cloud.google.com/container-registry/docs/configuring-notifications)
 
 Assuming there is interest in ImageWolf, the next step will be to change the hacked
 together code into a coherent solution.

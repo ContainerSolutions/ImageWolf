@@ -31,8 +31,16 @@ var torrentClient *torrent.Client
 var apiPort = 8000
 var dataDir = "/data"
 var myIps = make(map[string]bool)
+var lookupHost string
 
 func main() {
+	lookupHost = os.Getenv("LOOKUP_HOST")
+
+	if lookupHost == "" {
+		lookupHost = "tasks.imagewolf"
+	}
+
+	log.Printf("LOOKUP_HOST set to %s", lookupHost)
 
 	var clientConfig torrent.Config
 	clientConfig.DataDir = dataDir
@@ -97,10 +105,10 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 
 func getPeers() {
 
-	ips, err := net.LookupIP("tasks.imagewolf")
+	ips, err := net.LookupIP(lookupHost)
 
 	if err != nil {
-		log.Printf("Error looking up tasks")
+		log.Printf("Error looking up hosts")
 		return
 	}
 
