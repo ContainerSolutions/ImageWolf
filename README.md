@@ -12,7 +12,14 @@ cluster as they are pushed.
 
 ## Video
 
+### Docker Swarm
+
 [![asciicast](https://asciinema.org/a/DowEjf7Inqhtu4ZQsvZfA2b0j.png)](https://asciinema.org/a/DowEjf7Inqhtu4ZQsvZfA2b0j)
+
+### Kubernetes
+
+[![asciicast](https://asciinema.org/a/01rQtDxr67y4Gtu85KpBJ9cz2.png)](https://asciinema.org/a/01rQtDxr67y4Gtu85KpBJ9cz2)
+
 
 ## Getting Started
 
