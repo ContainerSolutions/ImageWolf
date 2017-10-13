@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - 1.8
+  - 1.9
+
+addons:
+  apt:
+    packages:
+    - cmake
+    - gcc-4.8
+    - g++-4.8
+
+before_install:
+  - make deps
+
+script:
+  - make test
