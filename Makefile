@@ -24,7 +24,14 @@ build:
 test:
 	@if [ -f ./bin/${BINARY}-* ] ; then rm ./bin/${BINARY}-* ; fi
 	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${LDFLAGS} -o ./bin/${BINARY}-linux ./src
-
+	@if [ -f ./bin/${BINARY}* ]
+		then
+		echo "go build successfull"
+		return 0
+	else
+	 	echo "go build failed"
+		return 1
+	fi
 .PHONY: deps
 deps:
 			go get $(DEPENDENCIES)
