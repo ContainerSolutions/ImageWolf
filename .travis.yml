@@ -8,8 +8,5 @@ addons:
     packages:
     - cmake
 
-before_install:
-  - make deps
-
 script:
   - make test
