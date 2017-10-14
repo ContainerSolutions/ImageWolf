@@ -4,7 +4,7 @@ GO := go
 BINARY = registry-x86_64
 GOARCH = amd64
 LDFLAGS= -ldflags '-extldflags "-static"'
-BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} -pkgdir ./vendor ./src
+BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} -pkgdir ./vendor/src ./src
 LOG= log
 DEPENDENCIES := 	github.com/anacrolix/torrent \
 	github.com/anacrolix/utp \
