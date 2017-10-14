@@ -23,7 +23,7 @@ build:
 .PHONY: test
 test:
 	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
-	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${LDFLAGS} -o ./bin/${BINARY} ./src
+	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
 	@if [ -f ./bin/${BINARY} ] ;	then return 0; else	return 1;	fi
 
 .PHONY: deps
