@@ -3,8 +3,9 @@ SHELL := /bin/bash
 GO := go
 BINARY = registry-x86_64
 GOARCH = amd64
+VENDOR=${GOPATH}/src/github.com/ArangoGutierrez/ImageWolf/vendor
 LDFLAGS= -ldflags '-extldflags "-static"'
-BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} -pkgdir ./vendor/src ./src
+BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} ./src
 LOG= log
 DEPENDENCIES := 	github.com/anacrolix/torrent \
 	github.com/anacrolix/utp \
@@ -23,12 +24,11 @@ build:
 .PHONY: test
 test:
 	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
-	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
-	@if [ -f ./bin/${BINARY} ] ;	then return 0; else	return 1;	fi
+	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} GOPATH=${VENDOR} go build ${BUILDARGS}
 
 .PHONY: deps
 deps:
-	+	GOPATH=${GOPATH}/src/github.com/ArangoGutierrez/ImageWolf/vendor go get -v $(DEPENDENCIES)
+	+	GOPATH=${VENDOR} go get -v $(DEPENDENCIES)
 
 .PHONY: env
 env:
