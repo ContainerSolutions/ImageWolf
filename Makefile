@@ -1,10 +1,10 @@
 # It's necessary to set this because some environments don't link sh -> bash.
 SHELL := /bin/bash
 GO := go
-
 BINARY = registry-x86_64
 GOARCH = amd64
 LDFLAGS= -ldflags '-extldflags "-static"'
+BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} -pkgdir ./vendor ./src
 LOG= log
 DEPENDENCIES := 	github.com/anacrolix/torrent \
 	github.com/anacrolix/utp \
@@ -17,8 +17,8 @@ clean:
 
 .PHONY: build
 build:
-	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY}-* ; fi
-	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${LDFLAGS} -o ./bin/${BINARY} ./src
+	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
+	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
 
 .PHONY: test
 test:
@@ -28,7 +28,7 @@ test:
 
 .PHONY: deps
 deps:
-			go get $(DEPENDENCIES)
+	+	GOPATH=${GOPATH}/src/github.com/ArangoGutierrez/ImageWolf/vendor go get -v $(DEPENDENCIES)
 
 .PHONY: env
 env:
