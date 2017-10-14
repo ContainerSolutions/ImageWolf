@@ -9,7 +9,8 @@ addons:
     - cmake
 
 before_install:
-  - 
+  - make deps
+  - make env
 
 script:
   - make test

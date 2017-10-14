@@ -3,10 +3,9 @@ SHELL := /bin/bash
 GO := go
 BINARY = registry-x86_64
 GOARCH = amd64
-VENDOR=${GOPATH}/src/github.com/ArangoGutierrez/ImageWolf/vendor
 LDFLAGS= -ldflags '-extldflags "-static"'
 BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} ./src
-LOG= log
+LOG= ImageWolf.log
 DEPENDENCIES := 	github.com/anacrolix/torrent \
 	github.com/anacrolix/utp \
 	github.com/docker/distribution/notifications
@@ -24,11 +23,11 @@ build:
 .PHONY: test
 test:
 	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
-	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} GOPATH=${VENDOR} go build ${BUILDARGS}
+	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
 
 .PHONY: deps
 deps:
-	+	GOPATH=${VENDOR} go get -v $(DEPENDENCIES)
+	+ go get -v $(DEPENDENCIES)
 
 .PHONY: env
 env:
