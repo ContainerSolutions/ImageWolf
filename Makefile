@@ -8,7 +8,8 @@ BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} ./src
 LOG= ImageWolf.log
 DEPENDENCIES := 	github.com/anacrolix/torrent \
 	github.com/anacrolix/utp \
-	github.com/docker/distribution/notifications
+	github.com/docker/distribution/notifications \
+	github.com/gorilla/mux
 
 .PHONY: clean
 clean:
