@@ -15,7 +15,7 @@ import (
 func dockerCliInit() {
 	var err error
 	CTX = context.Background()
-	*CLI, err = client.NewEnvClient()
+	CLI, err = client.NewEnvClient()
 	if err != nil {
 		panic(err)
 	}
