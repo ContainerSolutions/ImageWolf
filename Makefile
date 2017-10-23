@@ -1,15 +1,23 @@
 # It's necessary to set this because some environments don't link sh -> bash.
 SHELL := /bin/bash
 GO := go
-BINARY = registry-x86_64
+BINARY = ImageWolf
+TESTBINARY = healt
 GOARCH = amd64
 LDFLAGS= -ldflags '-extldflags "-static"'
 BUILDARGS = -v ${LDFLAGS} -o ./bin/${BINARY} ./src
+TESTBUILDARGS = -v ${LDFLAGS} -o ./bin/${TESTBINARY} ./test
 LOG= ImageWolf.log
 DEPENDENCIES := 	github.com/anacrolix/torrent \
 	github.com/anacrolix/utp \
 	github.com/docker/distribution/notifications \
-	github.com/gorilla/mux
+	github.com/gorilla/mux \
+	github.com/anacrolix/torrent/bencode \
+	github.com/anacrolix/torrent/metainfo \
+	github.com/docker/distribution/notifications \
+	github.com/docker/docker/api/types \
+	github.com/docker/docker/client \
+	golang.org/x/net/context
 
 .PHONY: clean
 clean:
@@ -24,14 +32,18 @@ build:
 .PHONY: test
 test:
 	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
-	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
+	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
+	+	GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
+	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${TESTBUILDARGS}
+	@sh -c 'bin/ImageWolf' 2> /dev/null &
+	+ sh -c 'bin/healt'
 
 .PHONY: deps
 deps:
-	+ go get -v $(DEPENDENCIES)
+	+	go get -v -d $(DEPENDENCIES)
 
 .PHONY: env
 env:
-						go env
+	+	go env
 
 #	EOF!

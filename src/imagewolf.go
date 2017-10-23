@@ -21,13 +21,14 @@ func main() {
 
 	torrentClient, _ = torrentInit()
 
-	log.Println("Starting up")
 	getMyIps()
 	getPeers()
+	dockerCliInit()
 
 	// Start the router
 	router := newRouter()
 	//Registry expects to find us on port 8000
+	log.Println("ImageWolf serving on port ", apiPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", apiPort), router))
 }
 

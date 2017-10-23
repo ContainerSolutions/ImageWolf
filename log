@@ -1,0 +1,26 @@
+2017/10/23 14:33:10 Starting up
+2017/10/23 14:33:10 LOOKUP_HOST set to tasks.imagewolf
+2017/10/23 14:33:10 couldn't open piece completion db in "/data": open /data/.torrent.bolt.db: no such file or directory
+2017/10/23 14:33:10 Found my IP 127.0.0.1
+2017/10/23 14:33:10 Found my IP ::1
+2017/10/23 14:33:10 Found my IP 172.17.9.20
+2017/10/23 14:33:10 Found my IP fe80::1a66:daff:fe24:a7ba
+2017/10/23 14:33:10 Found my IP 192.168.124.1
+2017/10/23 14:33:10 Found my IP 192.168.42.1
+2017/10/23 14:33:10 Found my IP 172.20.0.1
+2017/10/23 14:33:10 Found my IP fe80::42:16ff:fe0b:82d6
+2017/10/23 14:33:10 Found my IP 172.18.0.1
+2017/10/23 14:33:10 Found my IP 172.19.0.1
+2017/10/23 14:33:10 Found my IP fe80::42:46ff:fed7:c089
+2017/10/23 14:33:10 Found my IP fe80::94d2:edff:fe51:6ce8
+2017/10/23 14:33:10 Found my IP fe80::5cbc:a4ff:fe0f:39e4
+2017/10/23 14:33:10 Found my IP fe80::48a2:d2ff:fe34:5de6
+2017/10/23 14:33:10 Found my IP fe80::7415:28ff:fecd:3123
+2017/10/23 14:33:10 Found my IP fe80::4cb7:89ff:fe75:3acd
+2017/10/23 14:33:10 Found my IP fe80::fcf7:c4ff:fede:ef22
+2017/10/23 14:33:10 Found my IP fe80::6cef:85ff:fe53:7dc6
+2017/10/23 14:33:10 Found my IP fe80::3c33:23ff:fe84:46d2
+2017/10/23 14:33:10 Found my IP fe80::109a:ebff:fea2:7c69
+2017/10/23 14:33:10 Error looking up hosts
+2017/10/23 14:33:10 ImageWolf serving on port  8000
+2017/10/23 14:33:13 Healt Check

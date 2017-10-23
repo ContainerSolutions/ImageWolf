@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"sync"
 
 	"github.com/anacrolix/torrent"
+	"github.com/docker/docker/client"
 )
 
 var seen = make(map[string]bool)
@@ -20,6 +22,12 @@ var dataDir = "/data"
 var myIps = make(map[string]bool)
 var lookupHost string
 
+// Docker ctx
+var (
+	CTX context.Context
+	CLI *client.Client
+)
+
 /*
  * Type Route
  */
@@ -32,7 +40,7 @@ type Route struct {
 type Routes []Route
 
 /*
- * Struct for json responses
+ * HttpResp Struct for json responses
  */
 type HttpResp struct {
 	Status      int    `json:"status"`

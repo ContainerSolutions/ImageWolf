@@ -28,7 +28,7 @@ var routes = Routes{
  */
 func APIhealt(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "ImageWolf is UP!")
-	log.Println("Healt Check")
+	log.Println("Healt Check from ", r.RemoteAddr)
 }
 
 /*

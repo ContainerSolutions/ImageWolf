@@ -1,0 +1,6 @@
+FROM alpine:3.6
+
+COPY bin/imagewolf /bin/ImageWolf
+VOLUME ["/var/run/docker.sock"]
+
+ENTRYPOINT ["/bin/ImageWolf"]

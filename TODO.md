@@ -11,7 +11,7 @@ ImageWolf is a PoC currently and there are a lot of rough edges:
    the image
  - [ ] Allow Google Cloud Platform container registry webhook using [Pub/Sub](https://cloud.google.com/container-registry/docs/configuring-notifications)
  - [ ] Build a go-test pkg for CI
- - [ ] Replace `exec.Command` with the docker API "github.com/docker/docker/client"
+ - [x] Replace `exec.Command` with the docker API "github.com/docker/docker/client"
       `client.NewEnvClient()` + client.ImagePull
 
 Assuming there is interest in ImageWolf, the next step will be to change the hacked

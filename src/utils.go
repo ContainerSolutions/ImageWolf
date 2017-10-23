@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -18,29 +18,34 @@ import (
 	"github.com/docker/distribution/notifications"
 )
 
-func downloadAndSeedImage(registry string, repo string, tag string) {
+func downloadAndSeedImage(registry, repo, tag string) {
 
-	//Could directly use API rather than docker pull
-	imageName := fmt.Sprintf("%s/%s:%s", registry, repo, tag)
-	err := exec.Command("docker", "pull", imageName).Run()
+	err := dockerPull(registry, repo, tag)
 	if err != nil {
-		log.Printf("Failed pull of %s %v\n", imageName, err)
+		log.Printf("Failed pull of %s:%s %v\n", repo, tag, err)
 		return
-
 	}
-	log.Println("Pulled")
 
 	tmpfile, err := ioutil.TempFile(dataDir, strings.Replace(repo+tag, "/", "", -1))
 	if err != nil {
 		log.Print(err)
 		return
 	}
-	tmpfile.Close()
-	err = exec.Command("docker", "save", "-o", tmpfile.Name(), imageName).Run()
+	defer tmpfile.Close()
+
+	strm, err := dockerSave(registry, repo, tag)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	_, err = io.Copy(tmpfile, strm)
+
 	if err != nil {
 		log.Printf("Failed save %v\n", err)
 		return
 	}
+
 	log.Println("Saved")
 	mi := createTorrent(tmpfile)
 	seedTorrent(&mi, notifyPeers)
@@ -139,12 +144,13 @@ func loadImageFromTorrent(t *torrent.Torrent) {
 	log.Printf("Got: %d bytes\n", t.BytesCompleted())
 	log.Printf("Not got: %d bytes\n", t.BytesMissing())
 
-	err := exec.Command("docker", "load", "-i", dataDir+"/"+t.Files()[0].Path()).Run()
+	err := dockerLoad(dataDir + "/" + t.Files()[0].Path())
 	if err != nil {
 		log.Printf("Failed load %v\n", err)
 		return
 	}
-	log.Println("Loaded")
+
+	log.Println("Loaded image from torrent ", t.Files()[0].Path())
 
 }
 
@@ -171,6 +177,7 @@ func getPeers() {
 
 }
 
+// getMyIps get the Ip of the ImageWolf host
 func getMyIps() {
 
 	ifaces, err := net.Interfaces()
