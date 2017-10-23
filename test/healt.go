@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	url := "http://%127.0.0.1:8000/healt"
+	url := "http://127.0.0.1:8000/healt"
 
 	resp, err := http.Get(url)
 
