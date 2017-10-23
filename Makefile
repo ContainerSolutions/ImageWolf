@@ -34,9 +34,6 @@ test:
 	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
 	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
 	+	GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
-	+ GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${TESTBUILDARGS}
-	@sh -c 'bin/ImageWolf' 2> /dev/null &
-	+ sh -c 'bin/healt'
 
 .PHONY: deps
 deps:
