@@ -32,7 +32,6 @@ build:
 .PHONY: test
 test:
 	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
-	@if [ -f ./bin/${BINARY} ] ; then rm ./bin/${BINARY} ; fi
 	+	GOOS=linux CGO_ENABLED=0 GOARCH=${GOARCH} go build ${BUILDARGS}
 
 .PHONY: deps

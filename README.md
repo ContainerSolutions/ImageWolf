@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/ArangoGutierrez/ImageWolf.svg?branch=master)](https://travis-ci.org/ArangoGutierrez/ImageWolf)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ArangoGutierrez/ImageWolf)](https://goreportcard.com/report/github.com/ArangoGutierrez/ImageWolf)
 
 ImageWolf - Fast Distribution of Docker Images on Clusters
 ==========================================================
